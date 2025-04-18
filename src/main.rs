@@ -1,5 +1,5 @@
 use rusty_audio::Audio;
-use terminal_gamer::{frame, render};
+use terminal_gamer::{frame::{self, Drawable}, render, player::Player};
 use std::{
     {io,thread},
     time::Duration,
@@ -49,15 +49,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     // Game loop
+    let mut player = Player::new();
     'gameloop: loop {
         // per-frame unit
-        let current_frame = frame::new_frame();
+        let mut current_frame = frame::new_frame();
 
         // Input
         while event::poll(Duration::default())? {
 
             if let Event::Key(key_event) = event::read()?{
                 match key_event.code {
+                    KeyCode::Left => {
+                        player.move_left();
+                        // audio.play("move");
+                    },
+                    KeyCode::Right => {
+                        player.move_right();
+                        // audio.play("move");
+                    },
                     KeyCode::Esc | KeyCode::Char('q') => {
                         audio.play("lose");
                         break 'gameloop;
@@ -67,6 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
         // Draw & render
+        player.draw(&mut current_frame);
         let _ = render_tx.send(current_frame);
         thread::sleep(Duration::from_millis(1));
     }
