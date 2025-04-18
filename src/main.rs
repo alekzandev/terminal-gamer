@@ -1,5 +1,5 @@
 use rusty_audio::Audio;
-use terminal_gamer::{frame::{self, Drawable}, render, player::Player};
+use terminal_gamer::{frame::{self, Drawable}, invaders::Invaders, player::Player, render};
 use std::{
     error::Error, io, sync::mpsc, thread, time::{Duration, Instant}
 };
@@ -48,6 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Game loop
     let mut player = Player::new();
     let mut instant = Instant::now();
+    let mut invaders = Invaders::new();
     'gameloop: loop {
         // per-frame unit
         let delta = instant.elapsed();
@@ -82,10 +83,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         // Update
         player.update(delta);
+        if invaders.update(delta) {
+            audio.play("move");
+        }
 
 
         // Draw & render
-        player.draw(&mut current_frame);
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders];
+        for drawable in drawables {
+            drawable.draw(&mut current_frame);
+        }
         let _ = render_tx.send(current_frame);
         thread::sleep(Duration::from_millis(1));
     }
